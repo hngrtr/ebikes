@@ -26,16 +26,15 @@
 <body class="bg-gray-100 font-sans">
 
     <div id="detail-page">
-        <header class="container mx-auto p-8">
+        <header class="container mx-auto p-4">
             <a href="/" id="back-to-main" class="text-blue-500 hover:underline">&larr; Back to all bikes</a>
         </header>
-        <main class="container mx-auto p-8">
-            <article id="bike-detail" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <main class="container mx-auto">
+            <article id="bike-detail" class="grid grid-cols-1 md:grid-cols-2 gap-0">
                 <figure id="bike-image"></figure>
-                <div id="bike-info"></div>
+                <div id="bike-info" class="bg-white/50 rounded-tr-3xl rounded-br-3xl p-16 shadow-lg mt-20 self-start"></div>
             </article>
             <section class="mt-8">
-                <h2 class="text-2xl font-bold mb-4">Comments</h2>
                 <div id="comments-list"></div>
             </section>
         </main>

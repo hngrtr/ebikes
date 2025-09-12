@@ -7,7 +7,7 @@ const lastBtn = document.getElementById('last-btn');
 const pageNumbers = document.getElementById('page-numbers');
 
 let currentPage = 1;
-const bikesPerPage = 12;
+const bikesPerPage = 8;
 let numPages = 0;
 
 function displayBikes(page) {
@@ -18,12 +18,13 @@ function displayBikes(page) {
 
     for (const bike of paginatedBikes) {
         const bikeElement = document.createElement('article');
-        bikeElement.classList.add('bike', 'bg-white', 'rounded-lg', 'shadow-md', 'overflow-hidden', 'p-4');
+        bikeElement.classList.add('bike', 'bg-white', 'rounded-2xl', 'shadow-md', 'overflow-hidden', 'p-4');
         bikeElement.innerHTML = `
             <a href="/public/detail.html?id=${bike._id}">
-                <img src="${bike.imageUrl}" alt="${bike.make} ${bike.model}" class="w-full aspect-square object-cover rounded-md">
-                <div>
-                    <h2 class="text-lg font-bold mb-2 font-marker">${bike.make} ${bike.model} (${bike.year})</h2>
+                <img src="${bike.imageUrl}" alt="${bike.make} ${bike.model}" class="w-full aspect-square object-cover rounded-lg">
+                <div class="p-3">
+                    <h3 class="text-sm font-bold text-slate-500">${bike.make}</h3>
+                    <h2 class="text-2xl font-bold mb-4 font-marker">${bike.model} (${bike.year})</h2>
                     <div class="flex items-center">
                         ${[...Array(5)].map((_, i) => `
                             <span class="material-symbols-outlined ${i < bike.averageRating ? 'text-yellow-500' : 'text-gray-300'}" style="font-variation-settings: 'FILL' 1">star</span>
@@ -36,6 +37,9 @@ function displayBikes(page) {
         `;
         bikeList.appendChild(bikeElement);
     }
+
+    // Update URL with current page
+    history.pushState({ page: page }, '', `/?page=${page}`);
 }
 
 function setupPagination() {
@@ -92,29 +96,36 @@ function updatePageNumberButtons() {
     } else {
         const maxPagesBeforeCurrent = Math.floor(maxButtons / 2);
         const maxPagesAfterCurrent = Math.ceil(maxButtons / 2) - 1;
-        if (currentPage <= maxPagesBeforeCurrent) {
+
+        startPage = currentPage - maxPagesBeforeCurrent;
+        endPage = currentPage + maxPagesAfterCurrent;
+
+        // Adjust startPage and endPage to stay within bounds
+        if (startPage < 1) {
+            endPage += (1 - startPage); // Shift endPage to maintain maxButtons count
             startPage = 1;
-            endPage = maxButtons;
-        } else if (currentPage + maxPagesAfterCurrent >= numPages) {
-            startPage = numPages - maxButtons + 1;
+        }
+        if (endPage > numPages) {
+            startPage -= (endPage - numPages); // Shift startPage to maintain maxButtons count
             endPage = numPages;
-        } else {
-            startPage = currentPage - maxPagesBeforeCurrent;
-            endPage = currentPage + maxPagesAfterCurrent;
+        }
+        // Re-adjust startPage if it went below 1 after shifting for endPage
+        if (startPage < 1) {
+            startPage = 1;
         }
     }
 
     if (startPage > 1) {
         const dots = document.createElement('span');
         dots.textContent = '...';
-        dots.classList.add('px-4', 'py-2', 'text-gray-500');
+        dots.classList.add('px-4', 'py-4', 'text-gray-500');
         pageNumbers.appendChild(dots);
     }
 
     for (let i = startPage; i <= endPage; i++) {
         const pageButton = document.createElement('button');
         pageButton.textContent = i;
-        pageButton.classList.add('px-4', 'py-2', 'border-gray-200', 'mr-2', 'w-10', 'h-10', 'rounded-md', 'flex', 'items-center', 'justify-center');
+        pageButton.classList.add('px-4', 'py-4', 'border-gray-200', 'mr-2', 'w-10', 'h-10', 'rounded-full', 'flex', 'items-center', 'justify-center');
         if (i === currentPage) {
             pageButton.classList.add('bg-blue-500', 'text-white');
         } else {
@@ -132,7 +143,7 @@ function updatePageNumberButtons() {
     if (endPage < numPages) {
         const dots = document.createElement('span');
         dots.textContent = '...';
-        dots.classList.add('px-4', 'py-2', 'text-gray-500');
+        dots.classList.add('px-4', 'py-4', 'text-gray-500');
         pageNumbers.appendChild(dots);
     }
 }
@@ -151,6 +162,14 @@ async function fetchBikes() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         allBikes = await response.json();
+
+        // Check for page parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const pageParam = urlParams.get('page');
+        if (pageParam) {
+            currentPage = parseInt(pageParam);
+        }
+
         displayBikes(currentPage);
         setupPagination();
     } catch (error) {
@@ -158,5 +177,21 @@ async function fetchBikes() {
         bikeList.innerHTML = '<p class="text-red-500 text-center">Error loading bike data. Please try again later.</p>';
     }
 }
+
+// Handle browser back/forward buttons
+window.onpopstate = function(event) {
+    if (event.state && event.state.page) {
+        currentPage = event.state.page;
+        displayBikes(currentPage);
+        updatePaginationButtons();
+        updatePageNumberButtons();
+    } else {
+        // If no state, default to page 1
+        currentPage = 1;
+        displayBikes(currentPage);
+        updatePaginationButtons();
+        updatePageNumberButtons();
+    }
+};
 
 fetchBikes();

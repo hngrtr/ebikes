@@ -1,1 +1,110 @@
-/* Add any custom styles here */
+/* Simple CSS Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url('/public/img/e-bike-bg.jpg'); /* 1 - 0.4 = 0.6 opacity for white overlay */
+    background-position: bottom center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+    position: relative;
+}
+
+#comments-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    align-items: end;
+}
+
+.comment-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.comment-card {
+    position: relative;
+    background-color: white;
+    border-radius: 1.5rem;
+    padding: 4rem; /* Adjusted padding */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.comment-arrow {
+    position: absolute;
+    bottom: -10px; /* Adjusted to prevent overlap */
+    left: calc(80% - 1.5rem);
+    transform: translateX(-50%) scaleX(-1); /* Flipped horizontally */
+    width: 40px;
+    height: 20px;
+    filter: drop-shadow(2px 2px 1px rgba(0,0,0,0.05));
+}
+
+.comment-text {
+    font-family: 'Georgia', serif;
+    font-size: 1.5rem; /* Increased font size */
+    line-height: 2rem;
+    text-align: center;
+    font-weight: bold; /* Added bold */
+    font-style: italic; /* Added italic */
+    color: #4a4a4a;
+}
+
+.author-bubble {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    margin-left: calc(20% + 0.5rem); /* Adjusted margin */
+    border: 0.5rem solid rgba(255, 255, 255, 0.5);
+}
+
+.avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    object-fit: cover;
+    margin-right: 0.75rem;
+}
+
+.author-name {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+/* Background colors for author bubbles */
+.bg-blue-100 { background-color: #dbeafe; }
+.bg-green-100 { background-color: #d1fae5; }
+.bg-purple-100 { background-color: #e9d5ff; }
+
+/* Text colors for comment text */
+.text-blue-800 { color: #1e40af; }
+.text-green-800 { color: #065f46; }
+.text-purple-800 { color: #5b21b6; }
+
+.image-container {
+    position: relative;
+    border-radius: 2rem;
+    border: 1rem solid rgba(255, 255, 255, 0.5);
+    overflow: hidden;
+}
+
+.image-container img {
+    border-radius: 1rem;
+}
+
+.image-caption {
+    position: absolute;
+    bottom: 2rem;
+    left: 2rem;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    font-size: 0.9rem;
+}
