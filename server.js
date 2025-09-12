@@ -7,7 +7,10 @@ const port = 8082;
 const MONGO_CONNECTION_STRING = "mongodb://hungarter:Jp00FSA0GmkvVLPIRPKol93shn4tuzSoaxjilHnmmG4J53Hd@e882ade7-99e4-4e7b-b139-314b4a357ed8.nam5.firestore.goog:443/bikes-poc?loadBalanced=true&tls=true&authMechanism=SCRAM-SHA-256&retryWrites=false";
 
 // Serve static files from the 'public' directory
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public'), {
+    maxAge: '1y', // Cache for 1 year
+    immutable: true, // Indicate that the files will not change
+}));
 
 // Route for the main page
 app.get('/', (req, res) => {
@@ -25,11 +28,30 @@ app.get('/api/bikes', async (req, res) => {
         const ebikes_collection = db.collection('ebikes');
         const ratings_collection = db.collection('ratings');
 
-        // 1. Get all bikes
-        const bikes = await ebikes_collection.find({}).toArray();
+        // Get pagination parameters
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10; // Default limit to 10
+        const skip = (page - 1) * limit;
 
-        // 2. Get all ratings stats
+        // 1. Get paginated bikes
+        const bikes = await ebikes_collection.find({})
+                                            .skip(skip)
+                                            .limit(limit)
+                                            .toArray();
+
+        // Get total count for pagination metadata
+        const totalBikes = await ebikes_collection.countDocuments({});
+
+        // Extract bike IDs for ratings lookup
+        const bikeIds = bikes.map(bike => bike._id.toString());
+
+        // 2. Get ratings stats only for the paginated bikes
         const allRatingsStats = await ratings_collection.aggregate([
+            {
+                $match: {
+                    ebikeId: { $in: bikeIds } // Match only ratings for current page's bikes
+                }
+            },
             {
                 $group: {
                     _id: "$ebikeId",
@@ -56,7 +78,14 @@ app.get('/api/bikes', async (req, res) => {
             };
         });
 
-        res.json(results);
+        // Send paginated results along with total count
+        res.json({
+            bikes: results,
+            totalBikes: totalBikes,
+            currentPage: page,
+            totalPages: Math.ceil(totalBikes / limit)
+        });
+
     } catch (err) {
         console.error('Error fetching bikes:', err);
         res.status(500).json({ error: 'Error fetching bikes', details: err.message });

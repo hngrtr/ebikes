@@ -1,4 +1,6 @@
-let allBikes = [];
+console.log("app.js started");
+
+let bikesOnPage = [];
 const bikeList = document.getElementById('bike-list');
 const firstBtn = document.getElementById('first-btn');
 const prevBtn = document.getElementById('prev-btn');
@@ -7,16 +9,23 @@ const lastBtn = document.getElementById('last-btn');
 const pageNumbers = document.getElementById('page-numbers');
 
 let currentPage = 1;
+const urlParams = new URLSearchParams(window.location.search);
+const pageParam = urlParams.get('page');
+if (pageParam) {
+    currentPage = parseInt(pageParam);
+}
 const bikesPerPage = 8;
 let numPages = 0;
 
-function displayBikes(page) {
+function displayBikes() {
+    console.log("displayBikes called");
     bikeList.innerHTML = '';
-    const start = (page - 1) * bikesPerPage;
-    const end = start + bikesPerPage;
-    const paginatedBikes = allBikes.slice(start, end);
-
-    for (const bike of paginatedBikes) {
+    if (!Array.isArray(bikesOnPage)) {
+        console.error("bikesOnPage is not an array:", bikesOnPage);
+        return;
+    }
+    console.log("paginatedBikes (bikesOnPage) in displayBikes:", bikesOnPage);
+    for (const bike of bikesOnPage) {
         const bikeElement = document.createElement('article');
         bikeElement.classList.add('bike', 'bg-white', 'rounded-2xl', 'shadow-md', 'overflow-hidden', 'p-4');
         bikeElement.innerHTML = `
@@ -39,18 +48,15 @@ function displayBikes(page) {
     }
 
     // Update URL with current page
-    history.pushState({ page: page }, '', `/?page=${page}`);
+    // history.pushState({ page: currentPage }, '', `/?page=${currentPage}`);
 }
 
 function setupPagination() {
-    numPages = Math.ceil(allBikes.length / bikesPerPage);
-    updatePageNumberButtons();
-    updatePaginationButtons();
 
     firstBtn.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage = 1;
-            displayBikes(currentPage);
+            fetchBikes();
             updatePaginationButtons();
             updatePageNumberButtons();
         }
@@ -59,7 +65,7 @@ function setupPagination() {
     prevBtn.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
-            displayBikes(currentPage);
+            fetchBikes();
             updatePaginationButtons();
             updatePageNumberButtons();
         }
@@ -68,7 +74,7 @@ function setupPagination() {
     nextBtn.addEventListener('click', () => {
         if (currentPage < numPages) {
             currentPage++;
-            displayBikes(currentPage);
+            fetchBikes();
             updatePaginationButtons();
             updatePageNumberButtons();
         }
@@ -77,7 +83,7 @@ function setupPagination() {
     lastBtn.addEventListener('click', () => {
         if (currentPage < numPages) {
             currentPage = numPages;
-            displayBikes(currentPage);
+            fetchBikes();
             updatePaginationButtons();
             updatePageNumberButtons();
         }
@@ -85,6 +91,7 @@ function setupPagination() {
 }
 
 function updatePageNumberButtons() {
+    console.log("updatePageNumberButtons called. CurrentPage:", currentPage, "numPages:", numPages);
     pageNumbers.innerHTML = '';
 
     const maxButtons = 4;
@@ -133,7 +140,7 @@ function updatePageNumberButtons() {
         }
         pageButton.addEventListener('click', () => {
             currentPage = i;
-            displayBikes(currentPage);
+            fetchBikes();
             updatePaginationButtons();
             updatePageNumberButtons();
         });
@@ -156,25 +163,34 @@ function updatePaginationButtons() {
 }
 
 async function fetchBikes() {
+    console.log("fetchBikes called");
+    console.log("currentPage before fetch:", currentPage);
+    const urlForFetch = `/api/bikes?page=${currentPage}&limit=${bikesPerPage}`;
+    console.log("URL for fetch:", urlForFetch);
     try {
-        const response = await fetch('/api/bikes');
+        const response = await fetch(urlForFetch);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        allBikes = await response.json();
+        const data = await response.json();
+        console.log("API response data:", data);
+        bikesOnPage = data.bikes || [];
+        console.log("bikesOnPage after fetch:", bikesOnPage);
+        bikesOnPage.forEach(bike => console.log("Bike ID:", bike._id)); // Log bike IDs
+        numPages = data.totalPages;
+        // currentPage is already set or updated by pageParam, or defaults to 1
 
-        // Check for page parameter in URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const pageParam = urlParams.get('page');
-        if (pageParam) {
-            currentPage = parseInt(pageParam);
-        }
+        // Update URL after successful fetch and currentPage is finalized
+        console.log("Pushing state for page:", currentPage);
+        history.pushState({ page: currentPage }, '', `/?page=${currentPage}`);
 
-        displayBikes(currentPage);
-        setupPagination();
+        displayBikes();
+        updatePaginationButtons();
+        updatePageNumberButtons();
     } catch (error) {
         console.error('Error fetching bike data:', error);
         bikeList.innerHTML = '<p class="text-red-500 text-center">Error loading bike data. Please try again later.</p>';
+    } finally {
     }
 }
 
@@ -182,16 +198,17 @@ async function fetchBikes() {
 window.onpopstate = function(event) {
     if (event.state && event.state.page) {
         currentPage = event.state.page;
-        displayBikes(currentPage);
+        fetchBikes();
         updatePaginationButtons();
         updatePageNumberButtons();
     } else {
         // If no state, default to page 1
         currentPage = 1;
-        displayBikes(currentPage);
+        fetchBikes();
         updatePaginationButtons();
         updatePageNumberButtons();
     }
 };
 
 fetchBikes();
+setupPagination();
