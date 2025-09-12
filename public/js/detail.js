@@ -12,7 +12,12 @@ async function displayBikeDetails(bikeId) {
         const bikeInfo = document.getElementById('bike-info');
         const commentsList = document.getElementById('comments-list');
 
-        bikeImage.innerHTML = `<img src="${bike.imageUrl}" alt="${bike.make} ${bike.model}" class="w-full rounded-lg"><figcaption class="text-center mt-2 text-gray-600">${bike.make} ${bike.model} (${bike.year})</figcaption>`;
+        bikeImage.innerHTML = `
+            <div class="image-container">
+                <img src="${bike.imageUrl}" alt="${bike.make} ${bike.model}" class="w-full rounded-lg">
+                <figcaption class="image-caption">${bike.make} ${bike.model} (${bike.year})</figcaption>
+            </div>
+        `;
         bikeInfo.innerHTML = `
             <h1 class="text-4xl font-bold mb-4 font-marker">${bike.make} ${bike.model} (${bike.year})</h1>
             <div class="flex items-center mb-4">
@@ -27,10 +32,20 @@ async function displayBikeDetails(bikeId) {
         `;
 
         if (bike.comments && bike.comments.length > 0) {
-            commentsList.innerHTML = bike.comments.map(comment => `
-                <article class="bg-gray-50 p-4 rounded-lg mb-2">
-                    <p class="text-gray-800">${comment}</p>
-                </article>
+            const bgColors = ['bg-blue-100', 'bg-green-100', 'bg-purple-100'];
+            commentsList.innerHTML = bike.comments.map((comment, index) => `
+                <div class="comment-container">
+                    <div class="comment-card">
+                        <svg class="comment-arrow" width="40" height="20" viewBox="0 0 40 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M0 0 H40 C20 10, 10 20, 0 20 Z" fill="white"/>
+                        </svg>
+                        <p class="comment-text">“${comment.comment}”</p>
+                    </div>
+                    <div class="author-bubble ${bgColors[index % bgColors.length]}">
+                        <img src="${comment.avatarUrl}" alt="${comment.userId}" class="avatar">
+                        <span class="author-name">${comment.userId}</span>
+                    </div>
+                </div>
             `).join('');
         } else {
             commentsList.innerHTML = '<p class="text-gray-600">No comments yet.</p>';

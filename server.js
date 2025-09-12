@@ -73,6 +73,7 @@ app.get('/api/bikes/:id', async (req, res) => {
         const db = client.db('bikes-poc');
         const ebikes_collection = db.collection('ebikes');
         const ratings_collection = db.collection('ratings');
+        const comments_collection = db.collection('comments');
         const { id } = req.params;
 
         // 1. Get bike details
@@ -85,9 +86,7 @@ app.get('/api/bikes/:id', async (req, res) => {
         // 2. Get ratings
         const ratingStats = await ratings_collection.aggregate([
             {
-                $match: {
-                    "ebikeId": id
-                }
+                $match: { "ebikeId": id }
             },
             {
                 $group: {
@@ -95,18 +94,13 @@ app.get('/api/bikes/:id', async (req, res) => {
                     averageRating: { $avg: "$rating" },
                     ratingCount: { $sum: 1 }
                 }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    ebikeId: "$_id",
-                    averageRating: 1,
-                    ratingCount: 1
-                }
             }
         ]).toArray();
 
-        // 3. Combine results
+        // 3. Get comments
+        const comments = await comments_collection.find({ ebikeId: id }).toArray();
+
+        // 4. Combine results
         const result = { ...bike };
         if (ratingStats.length > 0) {
             result.averageRating = ratingStats[0].averageRating;
@@ -115,6 +109,7 @@ app.get('/api/bikes/:id', async (req, res) => {
             result.averageRating = 0;
             result.ratingCount = 0;
         }
+        result.comments = comments;
 
         res.json(result);
 
