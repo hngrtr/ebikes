@@ -7,6 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 });
 
+function getResizedImageUrl(originalUrl, sizeName) {
+    if (!originalUrl) return '';
+    const parts = originalUrl.split('.');
+    const extension = parts.pop();
+    const base = parts.join('.');
+    return `${base}_${sizeName}.${extension}`;
+}
+
 function initComparison() {
     document.getElementById('view-comparison-btn').addEventListener('click', showComparisonDialog);
     updateComparisonSlots();
@@ -20,7 +28,7 @@ function updateComparisonSlots() {
         const bike = comparisonBikes[index];
 
         if (bike) {
-            slot.innerHTML = `<img src="${bike.imageUrl}" alt="${bike.make} ${bike.model}" class="w-full h-full object-cover rounded-full"><div class="remove-bike-icon material-symbols-outlined">close</div>`;
+            slot.innerHTML = `<img src="${getResizedImageUrl(bike.imageUrl, 'thumbnail')}" alt="${bike.make} ${bike.model}" class="w-full h-full object-cover rounded-full"><div class="remove-bike-icon material-symbols-outlined">close</div>`;
             slot.classList.add('has-bike');
             slot.querySelector('.remove-bike-icon').addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -51,7 +59,7 @@ function showComparisonDialog() {
                         ${comparisonBikes.map(bike => `
                             <th>
                                 <div class="flex items-center">
-                                    <img src="${bike.imageUrl}" alt="${bike.make} ${bike.model}" class="w-14 h-14 object-cover rounded-full mr-2">
+                                    <img src="${getResizedImageUrl(bike.imageUrl, 'medium')}" alt="${bike.make} ${bike.model}" class="w-14 h-14 object-cover rounded-full mr-2">
                                     <div>
                                         <span>${bike.make} ${bike.model}</span>
                                         <div class="flex items-center">

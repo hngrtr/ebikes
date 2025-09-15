@@ -14,7 +14,7 @@ async function displayBikeDetails(bikeId) {
 
         bikeImage.innerHTML = `
             <div class="image-container">
-                <img src="${bike.imageUrl}" alt="${bike.make} ${bike.model}" class="w-full rounded-lg">
+                <img src="${getResizedImageUrl(bike.imageUrl, 'large')}" alt="${bike.make} ${bike.model}" class="w-full rounded-lg">
                 <figcaption class="image-caption">${bike.make} ${bike.model} (${bike.year})</figcaption>
             </div>
         `;
@@ -45,7 +45,7 @@ async function displayBikeDetails(bikeId) {
                 const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 tableContent += `
                     <tr>
-                        <td class="py-2 font-bold text-slate-600">${formattedKey}</td>
+                        <td class="py-2 font-bold text-slate-800">${formattedKey}</td>
                         <td class="py-2">${value}</td>
                     </tr>
                 `;
@@ -100,6 +100,14 @@ async function displayBikeDetails(bikeId) {
         console.error('Error fetching bike details:', error);
         document.getElementById('detail-page').innerHTML = '<p class="text-red-500 text-center">Error loading bike details. Please try again later.</p>';
     }
+}
+
+function getResizedImageUrl(originalUrl, sizeName) {
+    if (!originalUrl) return '';
+    const parts = originalUrl.split('.');
+    const extension = parts.pop();
+    const base = parts.join('.');
+    return `${base}_${sizeName}.${extension}`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

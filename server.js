@@ -3,7 +3,7 @@ const path = require('path');
 const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
-const port = 8082;
+const port = process.env.PORT || 8080;
 const MONGO_CONNECTION_STRING = "mongodb://hungarter:Jp00FSA0GmkvVLPIRPKol93shn4tuzSoaxjilHnmmG4J53Hd@e882ade7-99e4-4e7b-b139-314b4a357ed8.nam5.firestore.goog:443/bikes-poc?loadBalanced=true&tls=true&authMechanism=SCRAM-SHA-256&retryWrites=false";
 
 // Serve static files from the 'public' directory

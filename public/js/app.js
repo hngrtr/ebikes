@@ -14,8 +14,16 @@ const pageParam = urlParams.get('page');
 if (pageParam) {
     currentPage = parseInt(pageParam);
 }
-const bikesPerPage = 8;
+const bikesPerPage = 12;
 let numPages = 0;
+
+function getResizedImageUrl(originalUrl, sizeName) {
+    if (!originalUrl) return '';
+    const parts = originalUrl.split('.');
+    const extension = parts.pop();
+    const base = parts.join('.');
+    return `${base}_${sizeName}.${extension}`;
+}
 
 function displayBikes() {
     console.log("displayBikes called");
@@ -30,7 +38,7 @@ function displayBikes() {
         bikeElement.classList.add('bike', 'bg-white', 'rounded-2xl', 'shadow-md', 'overflow-hidden', 'p-4');
         bikeElement.innerHTML = `
             <a href="/public/detail.html?id=${bike._id}">
-                <img src="${bike.imageUrl}" alt="${bike.make} ${bike.model}" class="w-full aspect-square object-cover rounded-lg">
+                <img src="${getResizedImageUrl(bike.imageUrl, 'large')}" alt="${bike.make} ${bike.model}" class="w-full aspect-square object-cover rounded-lg">
                 <div class="p-3">
                     <h3 class="text-sm font-bold text-slate-500">${bike.make}</h3>
                     <h2 class="text-2xl font-bold mb-4 font-marker">${bike.model} (${bike.year})</h2>

@@ -6,8 +6,8 @@ from google.cloud import storage
 
 # --- Configuration ---
 # You can change these values to match your environment
-MONGO_CONNECTION_STRING = "mongodb://hungarter:Jp00FSA0GmkvVLPIRPKol93shn4tuzSoaxjilHnmmG4J53Hd<!-- Import failed: e882ade7-99e4-4e7b-b139-314b4a357ed8.nam5.firestore.goog:443/bikes-poc?loadBalanced=true&tls=true&authMechanism=SCRAM-SHA-256&retryWrites=false" - Only .md files are supported -->
-GCS_BUCKET_NAME = "ebike-images"
+MONGO_CONNECTION_STRING = "mongodb://hungarter:Jp00FSA0GmkvVLPIRPKol93shn4tuzSoaxjilHnmmG4J53Hd<!-- Import failed: e882ade7-99e4-4e7b-b139-314b4a357ed8.nam5.firestore.goog:443/bikes-poc?loadBalanced=true&tls=true&authMechanism=SCRAM-SHA-256&retryWrites=false" - Only .md files are supported -->"
+GCS_BUCKET_NAME = "ebike-images-us-central1"
 GCP_PROJECT_ID = "bikes-poc"
 LOCATION = "us-central1" # Specify a location that supports Imagen
 
@@ -23,7 +23,7 @@ def generate_and_upload_images():
 
     # --- 1. Connect to the database and get the bike data ---
     print("Connecting to the database...")
-    client = MongoClient(MONGO_CONNECTION_STRING)
+  client = MongoClient(MONGO_CONNECTION_STRING)
     db = client['bikes-poc']
     ebikes_collection = db.ebikes
     bikes = list(ebikes_collection.find({}))
