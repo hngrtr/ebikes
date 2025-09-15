@@ -6,12 +6,75 @@
 }
 
 body {
-    background-image: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url('/public/img/e-bike-bg.jpg'); /* 1 - 0.4 = 0.6 opacity for white overlay */
+    background-image: linear-gradient(#FFF, rgba(255, 255, 255, 0.7)), url('/public/img/ebike-bg.jpg');
     background-position: bottom center;
     background-repeat: no-repeat;
     background-size: cover;
     background-attachment: fixed;
     position: relative;
+}
+
+#comparison-section {
+    padding: 2rem 0;
+}
+
+.comparison-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+}
+
+.comparison-slot {
+    width: 100px;
+    height: 100px;
+    border: 2px dotted #ccc;
+    border-radius: 50%;
+    position: relative;
+    background-color: white;
+}
+
+.comparison-slot.has-bike {
+    border-style: solid;
+}
+
+.comparison-slot img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.comparison-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.comparison-dialog-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    width: 80%;
+    max-width: 1200px;
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.comparison-table th, .comparison-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
 }
 
 #comments-list {
@@ -31,7 +94,7 @@ body {
     position: relative;
     background-color: white;
     border-radius: 1.5rem;
-    padding: 4rem; /* Adjusted padding */
+    padding: 4rem;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     width: 100%;
     margin-bottom: 1rem;
@@ -39,21 +102,18 @@ body {
 
 .comment-arrow {
     position: absolute;
-    bottom: -10px; /* Adjusted to prevent overlap */
-    left: calc(80% - 1.5rem);
-    transform: translateX(-50%) scaleX(-1); /* Flipped horizontally */
+    bottom: -1.65rem;
+    left: 5rem;
+    transform: translateX(-50%) rotate(180deg);
     width: 40px;
-    height: 20px;
-    filter: drop-shadow(2px 2px 1px rgba(0,0,0,0.05));
+    height: 2rem;
 }
 
 .comment-text {
-    font-family: 'Georgia', serif;
+    font-family: 'Cutive', serif;
     font-size: 1.5rem; /* Increased font size */
     line-height: 2rem;
     text-align: center;
-    font-weight: bold; /* Added bold */
-    font-style: italic; /* Added italic */
     color: #4a4a4a;
 }
 
@@ -62,7 +122,7 @@ body {
     align-items: center;
     padding: 0.5rem 1rem;
     border-radius: 9999px;
-    margin-left: calc(20% + 0.5rem); /* Adjusted margin */
+    margin-left: 6rem;
     border: 0.5rem solid rgba(255, 255, 255, 0.5);
 }
 

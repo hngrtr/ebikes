@@ -134,7 +134,7 @@ function updatePageNumberButtons() {
         pageButton.textContent = i;
         pageButton.classList.add('px-4', 'py-4', 'border-gray-200', 'mr-2', 'w-10', 'h-10', 'rounded-full', 'flex', 'items-center', 'justify-center');
         if (i === currentPage) {
-            pageButton.classList.add('bg-blue-500', 'text-white');
+            pageButton.classList.add('bg-cyan-500', 'text-white');
         } else {
             pageButton.classList.add('bg-white');
         }

@@ -17,6 +17,44 @@ DEFAULT_AVATAR_URL = "https://storage.googleapis.com/avatar-cartoon-images/defau
 # gcloud auth application-default login
 # gcloud config set project {GCP_PROJECT_ID}
 
+def generate_and_upload_default_avatar():
+    print("\nGenerating and uploading default avatar...")
+    vertexai.init(project=GCP_PROJECT_ID, location=LOCATION)
+    storage_client = storage.Client(project=GCP_PROJECT_ID)
+    bucket = storage_client.bucket(GCS_BUCKET_NAME)
+
+    generic_prompt = "Create a cute 3D-style cartoon avatar head for my ebike review app. Make it unique and personalized."
+    images = []
+    try:
+        print("Generating default image with Imagen...")
+        model = ImageGenerationModel.from_pretrained("imagegeneration@006")
+        images = model.generate_images(
+            prompt=generic_prompt,
+            number_of_images=1,
+            aspect_ratio="1:1"
+        )
+        if not images:
+            print("Default image generation returned no images.")
+            return None
+
+        temp_image_path = "/tmp/default-avatar.png"
+        images[0].save(location=temp_image_path, include_generation_parameters=True)
+        print(f"Default image generated and saved to {temp_image_path}")
+
+        print("Uploading default image to GCS...")
+        gcs_blob_name = "default-avatar.png"
+        blob = bucket.blob(gcs_blob_name)
+        blob.upload_from_filename(temp_image_path)
+        print(f"Default image uploaded to gs://{GCS_BUCKET_NAME}/{gcs_blob_name}")
+
+        public_url = blob.public_url
+        print(f"Default avatar public URL: {public_url}")
+        return public_url
+
+    except Exception as e:
+        print(f"An error occurred while generating/uploading default avatar: {e}")
+        return None
+
 def generate_and_upload_avatars():
     """
     Connects to the database, gets all unique userIds from the comments,
@@ -117,3 +155,5 @@ def generate_and_upload_avatars():
 
 if __name__ == "__main__":
     generate_and_upload_avatars()
+    # Call this function once to ensure the default avatar is generated and uploaded
+    generate_and_upload_default_avatar()
