@@ -23,7 +23,8 @@ async function displayBikeDetails(bikeId) {
         const isCompared = comparisonBikes.some(cb => cb._id === bike._id);
 
         bikeInfo.innerHTML = `
-            <h1 class="text-4xl font-bold mb-4 font-marker">${bike.make} ${bike.model} (${bike.year})</h1>
+            <h3 class="text-sm font-bold text-slate-500">${bike.make}</h3>
+            <h1 class="text-4xl font-bold mb-4 font-marker">${bike.model} (${bike.year})</h1>
             <div class="flex items-center mb-4">
                 ${[...Array(5)].map((_, i) => `
                     <span class="material-symbols-outlined ${i < bike.averageRating ? 'text-yellow-500' : 'text-gray-300'}" style="font-variation-settings: 'FILL' 1">star</span>
@@ -32,8 +33,27 @@ async function displayBikeDetails(bikeId) {
                 <span class="ml-1 text-gray-400">(${bike.ratingCount || 0})</span>
             </div>
             <p class="text-gray-700 text-lg mb-4">${bike.description}</p>
-            <button id="comparison-btn" class="bg-cyan-500 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded">${isCompared ? 'Remove from Comparison' : 'Add to Comparison'}</button>
+            <p class="text-3xl font-bold mb-4">$${bike.price}</p>
+            <button id="comparison-btn" class="bg-cyan-500 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded">${isCompared ? 'Remove from My List' : 'Add to My List'}</button>
         `;
+
+        if (bike.specs) {
+            const specsTable = document.createElement('table');
+            specsTable.classList.add('w-full', 'text-left', 'mt-8');
+            let tableContent = '<tbody class="divide-y divide-gray-200">';
+            for (const [key, value] of Object.entries(bike.specs)) {
+                const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                tableContent += `
+                    <tr>
+                        <td class="py-2 font-bold text-slate-600">${formattedKey}</td>
+                        <td class="py-2">${value}</td>
+                    </tr>
+                `;
+            }
+            tableContent += '</tbody>';
+            specsTable.innerHTML = tableContent;
+            bikeInfo.appendChild(specsTable);
+        }
 
         if (bike.comments && bike.comments.length > 0) {
             const bgColors = ['bg-blue-100', 'bg-green-100', 'bg-purple-100'];
@@ -62,11 +82,11 @@ async function displayBikeDetails(bikeId) {
 
             if (isCompared) {
                 comparisonBikes = comparisonBikes.filter(cb => cb._id !== bike._id);
-                comparisonBtn.textContent = 'Add to Comparison';
+                comparisonBtn.textContent = 'Add to My List';
             } else {
                 if (comparisonBikes.length < 3) {
                     comparisonBikes.push(bike);
-                    comparisonBtn.textContent = 'Remove from Comparison';
+                    comparisonBtn.textContent = 'Remove from My List';
                 } else {
                     alert('You can only compare up to 3 bikes.');
                 }

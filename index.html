@@ -54,7 +54,9 @@
         </main>
     </div>
 
-    <script src="/public/js/shared.js"></script>
+    <script>
+        document.write(`<script src="/public/js/shared.js?v=${Math.random()}"><\/script>`);
+    </script>
     <script src="/public/js/app.js"></script>
 </body>
 </html>
