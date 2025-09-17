@@ -1,10 +1,49 @@
 const express = require('express');
 const path = require('path');
 const { MongoClient, ObjectId } = require('mongodb');
+const cors = require('cors'); // Import cors
 
 const app = express();
 const port = process.env.PORT || 8080;
 const MONGO_CONNECTION_STRING = "mongodb://hungarter:Jp00FSA0GmkvVLPIRPKol93shn4tuzSoaxjilHnmmG4J53Hd@e882ade7-99e4-4e7b-b139-314b4a357ed8.nam5.firestore.goog:443/bikes-poc?loadBalanced=true&tls=true&authMechanism=SCRAM-SHA-256&retryWrites=false";
+
+// Use CORS middleware
+app.use(cors());
+
+// Middleware to parse JSON bodies
+app.use(express.json());
+
+// Middleware to log mobile requests
+app.use((req, res, next) => {
+    const userAgent = req.headers['user-agent'];
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(userAgent);
+
+    if (isMobile) {
+        console.log(`[MOBILE REQUEST] Method: ${req.method}, Path: ${req.path}, User-Agent: ${userAgent}`);
+        // You can add more details here, e.g., query params, headers
+    }
+    next();
+});
+
+// New API endpoint for client-side logging
+app.post('/api/log/client', (req, res) => {
+    const { level, message, stack, url } = req.body;
+    const userAgent = req.headers['user-agent'];
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(userAgent);
+
+    const logPrefix = isMobile ? '[CLIENT-MOBILE-LOG]' : '[CLIENT-DESKTOP-LOG]';
+
+    if (level === 'error') {
+        console.error(`${logPrefix} ERROR: ${message} (URL: ${url})`);
+        if (stack) {
+            console.error(`Stack: ${stack}`);
+        }
+    } else {
+        console.log(`${logPrefix} ${level.toUpperCase()}: ${message} (URL: ${url})`);
+    }
+    res.status(200).send('Log received');
+});
+
 
 // Serve static files from the 'public' directory
 app.use('/public', express.static(path.join(__dirname, 'public'), {
@@ -78,13 +117,21 @@ app.get('/api/bikes', async (req, res) => {
             };
         });
 
-        // Send paginated results along with total count
-        res.json({
+        const responseData = {
             bikes: results,
             totalBikes: totalBikes,
             currentPage: page,
             totalPages: Math.ceil(totalBikes / limit)
-        });
+        };
+
+        // Log the response data for mobile requests
+        const userAgent = req.headers['user-agent'];
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(userAgent);
+        if (isMobile) {
+            console.log(`[MOBILE RESPONSE] Path: ${req.path}, Data: ${JSON.stringify(responseData, null, 2)}`);
+        }
+
+        res.json(responseData);
 
     } catch (err) {
         console.error('Error fetching bikes:', err);
@@ -150,6 +197,24 @@ app.get('/api/bikes/:id', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/`);
+// Global error handling for uncaught exceptions and unhandled rejections
+process.on('uncaughtException', (err) => {
+    console.error('UNCAUGHT EXCEPTION:', err.message, err.stack);
+    // It's critical to exit the process after an uncaught exception
+    // to prevent the application from being in an undefined state.
+    process.exit(1);
 });
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
+
+// Start the server
+try {
+    app.listen(port, '0.0.0.0', () => {
+        console.log(`Server running at http://0.0.0.0:${port}/`);
+    });
+} catch (err) {
+    console.error('Failed to start server:', err.message, err.stack);
+    process.exit(1);
+}

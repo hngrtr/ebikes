@@ -7,12 +7,60 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 });
 
+// Client-side logging helper (duplicated from app.js for now)
+async function logClientError(message, error) {
+    const logData = {
+        level: 'error',
+        message: message,
+        url: window.location.href,
+        stack: error ? error.stack : 'No stack trace available'
+    };
+    try {
+        await fetch('/api/log/client', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(logData),
+        });
+    } catch (e) {
+        console.error('Failed to send client log to server:', e);
+    }
+}
+
+async function logClientInfo(message) {
+    const logData = {
+        level: 'info',
+        message: message,
+        url: window.location.href,
+    };
+    try {
+        await fetch('/api/log/client', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(logData),
+        });
+    } catch (e) {
+        console.error('Failed to send client log to server:', e);
+    }
+}
+
 function getResizedImageUrl(originalUrl, sizeName) {
     if (!originalUrl) return '';
-    const parts = originalUrl.split('.');
-    const extension = parts.pop();
-    const base = parts.join('.');
-    return `${base}_${sizeName}.${extension}`;
+
+    // Find the last dot to separate base and extension
+    const lastDotIndex = originalUrl.lastIndexOf('.');
+    if (lastDotIndex === -1) {
+        // No extension, just append sizeName
+        return `${originalUrl}_${sizeName}`;
+    }
+
+    const base = originalUrl.substring(0, lastDotIndex);
+    const extension = originalUrl.substring(lastDotIndex); // Includes the dot
+
+    return `${base}_${sizeName}${extension}`;
 }
 
 function initComparison() {
@@ -44,6 +92,7 @@ function updateComparisonSlots() {
 }
 
 function showComparisonDialog() {
+    logClientInfo("showComparisonDialog called");
     const comparisonBikes = JSON.parse(localStorage.getItem('comparisonBikes')) || [];
     const dialog = document.createElement('div');
     dialog.classList.add('comparison-dialog');
@@ -59,7 +108,7 @@ function showComparisonDialog() {
                         ${comparisonBikes.map(bike => `
                             <th>
                                 <div class="flex items-center">
-                                    <img src="${getResizedImageUrl(bike.imageUrl, 'medium')}" alt="${bike.make} ${bike.model}" class="w-14 h-14 object-cover rounded-full mr-2">
+                                    <img src="${getResizedImageUrl(bike.imageUrl, 'thumbnail')}" alt="${bike.make} ${bike.model}" class="w-14 h-14 object-cover rounded-full mr-2">
                                     <div>
                                         <span>${bike.make} ${bike.model}</span>
                                         <div class="flex items-center">

@@ -1,12 +1,13 @@
 async function displayBikeDetails(bikeId) {
-    console.log('displayBikeDetails called with bikeId:', bikeId);
+    logClientInfo("displayBikeDetails called");
     try {
         const response = await fetch(`/api/bikes/${bikeId}`);
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
         }
         const bike = await response.json();
-        console.log('Bike details fetched:', bike);
+        logClientInfo("Bike details fetched");
 
         const bikeImage = document.getElementById('bike-image');
         const bikeInfo = document.getElementById('bike-info');
@@ -82,11 +83,11 @@ async function displayBikeDetails(bikeId) {
 
             if (isCompared) {
                 comparisonBikes = comparisonBikes.filter(cb => cb._id !== bike._id);
-                comparisonBtn.textContent = 'Add to My List';
+                comparisonBtn.textContent = 'Remove from My List';
             } else {
                 if (comparisonBikes.length < 3) {
                     comparisonBikes.push(bike);
-                    comparisonBtn.textContent = 'Remove from My List';
+                    comparisonBtn.textContent = 'Add to My List';
                 } else {
                     alert('You can only compare up to 3 bikes.');
                 }
@@ -97,17 +98,65 @@ async function displayBikeDetails(bikeId) {
         });
 
     } catch (error) {
-        console.error('Error fetching bike details:', error);
-        document.getElementById('detail-page').innerHTML = '<p class="text-red-500 text-center">Error loading bike details. Please try again later.</p>';
+        logClientError('Error fetching bike details', error);
+        document.getElementById('detail-page').innerHTML = `<p class="text-red-500 text-center">Error loading bike details: ${error.message}. Please try again later.</p>`;
+    }
+}
+
+// Client-side logging helper (duplicated from app.js for now)
+async function logClientError(message, error) {
+    const logData = {
+        level: 'error',
+        message: message,
+        url: window.location.href,
+        stack: error ? error.stack : 'No stack trace available'
+    };
+    try {
+        await fetch('/api/log/client', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(logData),
+        });
+    } catch (e) {
+        console.error('Failed to send client log to server:', e);
+    }
+}
+
+async function logClientInfo(message) {
+    const logData = {
+        level: 'info',
+        message: message,
+        url: window.location.href,
+    };
+    try {
+        await fetch('/api/log/client', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(logData),
+        });
+    } catch (e) {
+        console.error('Failed to send client log to server:', e);
     }
 }
 
 function getResizedImageUrl(originalUrl, sizeName) {
     if (!originalUrl) return '';
-    const parts = originalUrl.split('.');
-    const extension = parts.pop();
-    const base = parts.join('.');
-    return `${base}_${sizeName}.${extension}`;
+
+    // Find the last dot to separate base and extension
+    const lastDotIndex = originalUrl.lastIndexOf('.');
+    if (lastDotIndex === -1) {
+        // No extension, just append sizeName
+        return `${originalUrl}_${sizeName}`;
+    }
+
+    const base = originalUrl.substring(0, lastDotIndex);
+    const extension = originalUrl.substring(lastDotIndex); // Includes the dot
+
+    return `${base}_${sizeName}${extension}`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -100,15 +100,15 @@ body {
 
 #comments-list {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 2rem;
-    align-items: end;
 }
 
-.comment-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+@media (min-width: 768px) {
+    #comments-list {
+        grid-template-columns: repeat(2, 1fr);
+        align-items: end;
+    }
 }
 
 .comment-card {
@@ -118,12 +118,11 @@ body {
     padding: 4rem;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     width: 100%;
-    margin-bottom: 1rem;
 }
 
 .comment-arrow {
     position: absolute;
-    bottom: -1.65rem;
+    bottom: -1.6rem;
     left: 5rem;
     transform: translateX(-50%) rotate(180deg);
     width: 40px;
@@ -139,11 +138,11 @@ body {
 }
 
 .author-bubble {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     padding: 0.5rem 1rem;
     border-radius: 9999px;
-    margin-left: 6rem;
+    margin: .5rem 0 0 5.5rem;
     border: 0.5rem solid rgba(255, 255, 255, 0.5);
 }
 

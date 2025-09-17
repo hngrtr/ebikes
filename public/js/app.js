@@ -2,11 +2,7 @@ console.log("app.js started");
 
 let bikesOnPage = [];
 const bikeList = document.getElementById('bike-list');
-const firstBtn = document.getElementById('first-btn');
-const prevBtn = document.getElementById('prev-btn');
-const nextBtn = document.getElementById('next-btn');
-const lastBtn = document.getElementById('last-btn');
-const pageNumbers = document.getElementById('page-numbers');
+const paginationInfo = document.getElementById('pagination-info'); // New element for pagination text
 
 let currentPage = 1;
 const urlParams = new URLSearchParams(window.location.search);
@@ -16,23 +12,72 @@ if (pageParam) {
 }
 const bikesPerPage = 12;
 let numPages = 0;
+let totalBikesCount = 0; // To store the total number of bikes
+
+// Client-side logging helper
+async function logClientError(message, error) {
+    const logData = {
+        level: 'error',
+        message: message,
+        url: window.location.href,
+        stack: error ? error.stack : 'No stack trace available'
+    };
+    try {
+        await fetch('/api/log/client', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(logData),
+        });
+    } catch (e) {
+        console.error('Failed to send client log to server:', e);
+    }
+}
+
+async function logClientInfo(message) {
+    const logData = {
+        level: 'info',
+        message: message,
+        url: window.location.href,
+    };
+    try {
+        await fetch('/api/log/client', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(logData),
+        });
+    } catch (e) {
+        console.error('Failed to send client log to server:', e);
+    }
+}
 
 function getResizedImageUrl(originalUrl, sizeName) {
     if (!originalUrl) return '';
-    const parts = originalUrl.split('.');
-    const extension = parts.pop();
-    const base = parts.join('.');
-    return `${base}_${sizeName}.${extension}`;
+
+    // Find the last dot to separate base and extension
+    const lastDotIndex = originalUrl.lastIndexOf('.');
+    if (lastDotIndex === -1) {
+        // No extension, just append sizeName
+        return `${originalUrl}_${sizeName}`;
+    }
+
+    const base = originalUrl.substring(0, lastDotIndex);
+    const extension = originalUrl.substring(lastDotIndex); // Includes the dot
+
+    return `${base}_${sizeName}${extension}`;
 }
 
 function displayBikes() {
-    console.log("displayBikes called");
+    logClientInfo("displayBikes called");
     bikeList.innerHTML = '';
     if (!Array.isArray(bikesOnPage)) {
-        console.error("bikesOnPage is not an array:", bikesOnPage);
+        logClientError("bikesOnPage is not an array", new Error("bikesOnPage is not an array"));
         return;
     }
-    console.log("paginatedBikes (bikesOnPage) in displayBikes:", bikesOnPage);
+    logClientInfo(`Displaying ${bikesOnPage.length} bikes`);
     for (const bike of bikesOnPage) {
         const bikeElement = document.createElement('article');
         bikeElement.classList.add('bike', 'bg-white', 'rounded-2xl', 'shadow-md', 'overflow-hidden', 'p-4');
@@ -60,13 +105,16 @@ function displayBikes() {
 }
 
 function setupPagination() {
+    const firstBtn = document.getElementById('first-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const lastBtn = document.getElementById('last-btn');
 
     firstBtn.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage = 1;
             fetchBikes();
-            updatePaginationButtons();
-            updatePageNumberButtons();
+            window.scrollTo(0, 0); // Scroll to top
         }
     });
 
@@ -74,8 +122,7 @@ function setupPagination() {
         if (currentPage > 1) {
             currentPage--;
             fetchBikes();
-            updatePaginationButtons();
-            updatePageNumberButtons();
+            window.scrollTo(0, 0); // Scroll to top
         }
     });
 
@@ -83,8 +130,7 @@ function setupPagination() {
         if (currentPage < numPages) {
             currentPage++;
             fetchBikes();
-            updatePaginationButtons();
-            updatePageNumberButtons();
+            window.scrollTo(0, 0); // Scroll to top
         }
     });
 
@@ -92,78 +138,24 @@ function setupPagination() {
         if (currentPage < numPages) {
             currentPage = numPages;
             fetchBikes();
-            updatePaginationButtons();
-            updatePageNumberButtons();
+            window.scrollTo(0, 0); // Scroll to top
         }
     });
 }
 
-function updatePageNumberButtons() {
-    console.log("updatePageNumberButtons called. CurrentPage:", currentPage, "numPages:", numPages);
-    pageNumbers.innerHTML = '';
-
-    const maxButtons = 4;
-    let startPage, endPage;
-
-    if (numPages <= maxButtons) {
-        startPage = 1;
-        endPage = numPages;
-    } else {
-        const maxPagesBeforeCurrent = Math.floor(maxButtons / 2);
-        const maxPagesAfterCurrent = Math.ceil(maxButtons / 2) - 1;
-
-        startPage = currentPage - maxPagesBeforeCurrent;
-        endPage = currentPage + maxPagesAfterCurrent;
-
-        // Adjust startPage and endPage to stay within bounds
-        if (startPage < 1) {
-            endPage += (1 - startPage); // Shift endPage to maintain maxButtons count
-            startPage = 1;
-        }
-        if (endPage > numPages) {
-            startPage -= (endPage - numPages); // Shift startPage to maintain maxButtons count
-            endPage = numPages;
-        }
-        // Re-adjust startPage if it went below 1 after shifting for endPage
-        if (startPage < 1) {
-            startPage = 1;
-        }
+function updatePaginationDisplay() {
+    const paginationInfo = document.getElementById('pagination-info'); // Get element here
+    const startItem = (currentPage - 1) * bikesPerPage + 1;
+    const endItem = Math.min(currentPage * bikesPerPage, totalBikesCount);
+    if (paginationInfo) {
+        paginationInfo.textContent = `${startItem} - ${endItem} of ${totalBikesCount}`;
     }
 
-    if (startPage > 1) {
-        const dots = document.createElement('span');
-        dots.textContent = '...';
-        dots.classList.add('px-4', 'py-4', 'text-gray-500');
-        pageNumbers.appendChild(dots);
-    }
+    const firstBtn = document.getElementById('first-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const lastBtn = document.getElementById('last-btn');
 
-    for (let i = startPage; i <= endPage; i++) {
-        const pageButton = document.createElement('button');
-        pageButton.textContent = i;
-        pageButton.classList.add('px-4', 'py-4', 'border-gray-200', 'mr-2', 'w-10', 'h-10', 'rounded-full', 'flex', 'items-center', 'justify-center');
-        if (i === currentPage) {
-            pageButton.classList.add('bg-cyan-500', 'text-white');
-        } else {
-            pageButton.classList.add('bg-white');
-        }
-        pageButton.addEventListener('click', () => {
-            currentPage = i;
-            fetchBikes();
-            updatePaginationButtons();
-            updatePageNumberButtons();
-        });
-        pageNumbers.appendChild(pageButton);
-    }
-
-    if (endPage < numPages) {
-        const dots = document.createElement('span');
-        dots.textContent = '...';
-        dots.classList.add('px-4', 'py-4', 'text-gray-500');
-        pageNumbers.appendChild(dots);
-    }
-}
-
-function updatePaginationButtons() {
     firstBtn.disabled = currentPage === 1;
     prevBtn.disabled = currentPage === 1;
     nextBtn.disabled = currentPage === numPages;
@@ -171,34 +163,29 @@ function updatePaginationButtons() {
 }
 
 async function fetchBikes() {
-    console.log("fetchBikes called");
-    console.log("currentPage before fetch:", currentPage);
+    logClientInfo("fetchBikes function called");
+    logClientInfo(`Fetching bikes for page ${currentPage}`);
     const urlForFetch = `/api/bikes?page=${currentPage}&limit=${bikesPerPage}`;
-    console.log("URL for fetch:", urlForFetch);
     try {
         const response = await fetch(urlForFetch);
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
         }
         const data = await response.json();
-        console.log("API response data:", data);
+        logClientInfo("API response data received");
         bikesOnPage = data.bikes || [];
-        console.log("bikesOnPage after fetch:", bikesOnPage);
-        bikesOnPage.forEach(bike => console.log("Bike ID:", bike._id)); // Log bike IDs
+        logClientInfo(`Bikes on page: ${bikesOnPage.length}`);
         numPages = data.totalPages;
-        // currentPage is already set or updated by pageParam, or defaults to 1
+        totalBikesCount = data.totalBikes; 
 
-        // Update URL after successful fetch and currentPage is finalized
-        console.log("Pushing state for page:", currentPage);
         history.pushState({ page: currentPage }, '', `/?page=${currentPage}`);
 
         displayBikes();
-        updatePaginationButtons();
-        updatePageNumberButtons();
+        updatePaginationDisplay(); 
     } catch (error) {
-        console.error('Error fetching bike data:', error);
-        bikeList.innerHTML = '<p class="text-red-500 text-center">Error loading bike data. Please try again later.</p>';
-    } finally {
+        logClientError('Error fetching bike data', error);
+        bikeList.innerHTML = `<p class="text-red-500 text-center">Error loading bike data: ${error.message}. Please try again later.</p>`;
     }
 }
 
@@ -207,14 +194,6 @@ window.onpopstate = function(event) {
     if (event.state && event.state.page) {
         currentPage = event.state.page;
         fetchBikes();
-        updatePaginationButtons();
-        updatePageNumberButtons();
-    } else {
-        // If no state, default to page 1
-        currentPage = 1;
-        fetchBikes();
-        updatePaginationButtons();
-        updatePageNumberButtons();
     }
 };
 
